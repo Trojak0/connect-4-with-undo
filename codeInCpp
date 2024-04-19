@@ -1,0 +1,362 @@
+
+/******************************************************************************
+* Connect 4 with backtracking
+* System: ZyBook Lab *
+* @author Adam Trojak
+* @version December 1st, 2023
+*******************************************************************************/
+
+#include <iostream>
+#include "LinkedList.h"
+using namespace std;
+
+// Function to display whose turn it is (X or O)
+// Inputs: Reference to the boolean variable 'turn'
+// Outputs: Prints whose turn it is AND CHANGES TURN
+void CheckTurn(bool &turn){
+    if(turn){
+        cout<<"It is X's turn."<<endl;
+        turn = !turn;
+    }else{
+        cout<<"It is O's turn."<<endl;
+        turn = !turn;
+    }
+}
+// Function to display whose turn it is (X or O)
+// Inputs: boolean variable 'turn'
+// Outputs: Prints whose turn it is
+void PrintTurn(bool turn){
+    if(turn){
+        cout<<"It is X's turn."<<endl;
+    }else{
+        cout<<"It is O's turn."<<endl;
+    }
+}
+
+
+// Function to print the game board
+// Inputs: 2D array 'gameBoard' representing the game board
+// Outputs: Prints the current state of the game board
+void PrintBoard(char gameBoard[][7]) {
+    int i;
+    int j;
+    
+    cout<<endl<<"\t0 1 2 3 4 5 6 ";
+    cout<<endl;
+    // Loop through the rows and columns of the game board
+    for(i=1;i<7;i++){
+        cout<<"\t";
+        for(j=0;j<7;j++){
+            cout<<gameBoard[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+}
+
+// Function to check if a specific column in the game board is full
+// Inputs: 2D array 'gameBoard' representing the game board, 'theColumn' the column to check
+// Outputs: Returns true if the column has at least one empty space, false otherwise
+bool CheckColumnFull(char gameBoard[][7], int theColumn){
+    int spaceCount=0;
+    bool hasSpace=false;
+    // Code to count the empty spaces in the specified column
+    for(int i=1;i<7;i++){
+        if(gameBoard[i][theColumn] == '-'){
+            ++spaceCount;
+        }
+    }
+    
+    if (spaceCount>0){
+        hasSpace=true;
+    }
+
+    return hasSpace;
+}
+
+// Function to place a move in a column
+// Inputs: Reference to 'rowAt', constant reference to 'columnIn', 'turn', 2D array 'gameBoard'
+// Outputs: Modifies 'gameBoard' to place X or O in the specified column
+void PutMoveIn(int &rowAt, const int &columnIn, bool turn, char gameBoard[][7]){
+// Code to place X or O in the specified column based on the current turn
+    if(gameBoard[6][columnIn]=='-'){
+    if(!turn){
+        gameBoard[6][columnIn]='X';
+        rowAt = 6;
+    }else{
+        gameBoard[6][columnIn]='O';
+        rowAt = 6;
+    }
+        }else if(gameBoard[5][columnIn]=='-'){
+    if(!turn){
+        gameBoard[5][columnIn]='X';
+        rowAt = 5;
+    }else{
+        gameBoard[5][columnIn]='O';
+        rowAt = 5;
+    }
+        }else if(gameBoard[4][columnIn]=='-'){
+    if(!turn){
+        gameBoard[4][columnIn]='X';
+        rowAt = 4;
+    }else{
+        gameBoard[4][columnIn]='O';
+        rowAt = 4;
+    }
+        }else if(gameBoard[3][columnIn]=='-'){
+    if(!turn){
+        gameBoard[3][columnIn]='X';
+        rowAt = 3;
+    }else{
+        gameBoard[3][columnIn]='O';
+        rowAt = 3;
+    }
+    //
+        }else if(gameBoard[2][columnIn]=='-'){
+    if(!turn){
+        gameBoard[2][columnIn]='X';
+        rowAt = 2;
+    }else{
+        gameBoard[2][columnIn]='O';
+        rowAt = 2;
+    }
+    //
+        }else if(gameBoard[1][columnIn]=='-'){
+    if(!turn){
+        gameBoard[1][columnIn]='X';
+        rowAt = 1;
+    }else{
+        gameBoard[1][columnIn]='O';
+        rowAt = 1;
+    }
+    //
+    }
+}
+
+// Function to undo the last move by reverting to the previous game board state
+// Inputs: References to 'rowAt', 'columnIn', 'turn', 2D array 'gameBoard', pointer to 'listOfBoard'
+// Outputs: Modifies 'gameBoard' to revert to the previous state and updates the linked list of game boards
+void UndoMove(int &rowAt, int &columnIn, bool& turn, char gameBoard[][7], GameBoardList* listOfBoard) {
+    listOfBoard->removeNode(); // Remove the last added node (representing the last move) from the linked list
+    listOfBoard->printBoard(); // Print the current game board after undoing the move
+
+    // Loop to update the 'gameBoard' with the state of the board from the removed node
+    for(int i = 1; i < 7; i++) {
+        for(int j = 0; j < 7; j++) {
+            gameBoard[i][j] = listOfBoard->getDataAtInx(i, j); // Copy data from the removed node to 'gameBoard'
+        }
+    }
+}
+
+// Function to take user input for the next move
+// Inputs: Reference to 'rowAt', 'columnIn', 'turn', 2D array 'gameBoard'
+// Outputs: Modifies 'rowAt' and 'gameBoard' with the player's move
+void InputTurn(int &rowAt, int &columnIn, bool& turn, char gameBoard[][7], GameBoardList* listOfBoard){
+    int boardFill=0;
+    char column;
+     // Code to take user input for column selection and handle invalid inputs
+    while (true) {
+        cout << "Enter a column to place your piece. ";
+        cin >> column;
+        // Check if the input is 'q' or 'Q' to end the game and exit if true
+        if (column == 'q' || column =='Q'){
+            cout << "Ending Game" << endl; // Print message indicating game termination
+            exit(0); // Terminate the program
+        }
+
+        // Check if the input is 'u' or 'U' to undo the last move
+        if (column == 'u' || column =='U'){
+            if(listOfBoard->getHead()->next != nullptr){ // Check if there exists a previous state in the       linked list
+                UndoMove(rowAt, columnIn, turn, gameBoard, listOfBoard); // Call function to undo the last      move
+                turn = !turn; // Toggle the player's turn after undoing the move
+                PrintTurn(!turn); // Print the turn of the player after undoing the move
+            } else {
+                PrintBoard(gameBoard); // If there's no previous state, print the current game board
+                PrintTurn(!turn); // Print the current player's turn
+            }
+            continue; // Continue to the next iteration of the loop
+        }
+
+        // Check if the input is 'p' or 'P' to print all boards in reverse order
+        if (column == 'p' || column =='P'){
+            cout << "Printing All Boards" << endl; // Print message indicating printing of all boards
+            listOfBoard->printAllBoardsReverse(); // Print all game boards in reverse order
+            listOfBoard->printBoard(); // Print the current game board
+            PrintTurn(turn); // Print the current player's turn
+            continue; // Continue to the next iteration of the loop
+        }
+        
+        switch (column){
+            case '0':
+                
+                columnIn = 0;
+                break;
+            case '1':
+                
+                columnIn = 1;
+                break;
+            case '2':
+                
+                columnIn = 2;
+                break;
+            case '3':
+                
+                columnIn = 3;
+                break;
+            case '4':
+                
+                columnIn = 4;
+                break;
+            case '5':
+               
+                columnIn = 5;
+                break;
+            case '6':
+                
+                columnIn = 6;
+                break;
+            default:
+                cout << "Please enter a valid column" << endl;
+                continue; // restart the loop to try again
+        }
+        break; // break out of the infinite loop if a valid number is entered
+    }
+
+    // Code to check if the column is already full and place the move if valid
+    if(CheckColumnFull(gameBoard, columnIn)){
+        PutMoveIn(rowAt, columnIn, turn, gameBoard);
+    }else{
+        cout<<endl<<"column chosen is already full"<<endl;
+    }
+
+    
+    // Code to check if the board is full and declare a draw if no winner is found
+    for(int i=1;i<7;i++){
+        for(int j=0;j<7;j++){
+            if(gameBoard[i][j] != '-'){
+                ++boardFill;
+            }
+        }
+    }
+    if(boardFill==42){
+        listOfBoard->printBoard();
+        cout<<"Board is Full, It's a Draw!!!"<<endl;
+        exit(0);
+    }
+
+}
+
+// Function to display the game introduction and instructions
+// Outputs: Prints game introduction and instructions
+void PrintIntro(){
+    cout<<"This is the Game Connect 4."<<endl;
+    cout<<"Each player should place an X or an O in the space"<<endl;
+    cout<<"by entering the column you want to place the piece."<<endl;
+    cout<<"The piece will fall until it reaches the bottom or"<<endl;
+    cout<<"the current pieces in the board. When X or O gets 4 in"<<endl;
+    cout<<"a row (either horizontally, vertically, or diagonally,"<<endl;
+    cout<<"then that person wins. The user can enter Q (or q) to"<<endl;
+    cout<<"end the game early."<<endl;
+    cout<<"Let's get started!!!"<<endl;   
+}
+
+// Function to check if a player has won the game
+// Inputs: 'row', 'columnIn', 'turn', 2D array 'gameBoard'
+// Outputs: Prints a message if a player has won the game
+void CheckWin(int row, int columnIn, bool turn, char gameBoard[][7], GameBoardList* listOfBoard){
+    char currentPlayer=' ';
+
+    if(!turn){
+        currentPlayer='X';
+    }else{
+        currentPlayer='O';
+    }
+     
+    // Check horizontally
+    
+    for (int i = columnIn - 3; i <= columnIn + 3; ++i) {
+        if (i >= 0 && i + 3 < 7 &&
+            gameBoard[row][i] == currentPlayer &&
+            gameBoard[row][i + 1] == currentPlayer &&
+            gameBoard[row][i + 2] == currentPlayer &&
+            gameBoard[row][i + 3] == currentPlayer) {
+            PrintBoard(gameBoard);
+            cout<<"Game is Over, Player "<<currentPlayer<<" got 4 in a row!!!!"<<endl;
+            exit(0);
+        }
+    }
+
+    // Check vertically
+   
+    for (int i = row - 3; i <= row + 3; ++i) {
+        if (i >= 1 && i + 3 < 7 &&
+            gameBoard[i][columnIn] == currentPlayer &&
+            gameBoard[i + 1][columnIn] == currentPlayer &&
+            gameBoard[i + 2][columnIn] == currentPlayer &&
+            gameBoard[i + 3][columnIn] == currentPlayer) {
+            PrintBoard(gameBoard);
+            cout<<"Game is Over, Player "<<currentPlayer<<" got 4 in a row!!!!"<<endl;
+            exit(0);
+        }
+    }
+
+    // Check diagonally (both directions)
+    for (int i = -3; i <= 3; ++i) {
+        if (row + i >= 1 && row + i + 3 < 7 && columnIn + i >= 0 && columnIn + i + 3 < 7 &&
+            gameBoard[row + i][columnIn + i] == currentPlayer &&
+            gameBoard[row + i + 1][columnIn + i + 1] == currentPlayer &&
+            gameBoard[row + i + 2][columnIn + i + 2] == currentPlayer &&
+            gameBoard[row + i + 3][columnIn + i + 3] == currentPlayer) {
+            PrintBoard(gameBoard);
+            cout<<"Game is Over, Player "<<currentPlayer<<" got 4 in a row!!!!"<<endl;
+            exit(0);
+        }
+        if (row - i >= 1 && row - i - 3 < 7 && columnIn + i >= 0 && columnIn + i + 3 < 7 &&
+            gameBoard[row - i][columnIn + i] == currentPlayer &&
+            gameBoard[row - i - 1][columnIn + i + 1] == currentPlayer &&
+            gameBoard[row - i - 2][columnIn + i + 2] == currentPlayer &&
+            gameBoard[row - i - 3][columnIn + i + 3] == currentPlayer) {
+            PrintBoard(gameBoard);
+            cout<<"Game is Over, Player "<<currentPlayer<<" got 4 in a row!!!!"<<endl;
+            exit(0);
+        }
+    }
+
+}
+
+
+int main() 
+{
+    // Game board initialization
+    char gameBoard[7][7] = {
+    /*row 0*/    {'0', '1', '2', '3', '4', '5', '6'},
+    /*row 1*/    {'-', '-', '-', '-', '-', '-', '-'},
+    /*row 2*/    {'-', '-', '-', '-', '-', '-', '-'},
+    /*row 3*/    {'-', '-', '-', '-', '-', '-', '-'},
+    /*row 4*/    {'-', '-', '-', '-', '-', '-', '-'},
+    /*row 5*/    {'-', '-', '-', '-', '-', '-', '-'},
+    /*row 6*/    {'-', '-', '-', '-', '-', '-', '-'}
+    };
+    // Variable initialization
+    bool turn = true;
+    int columnIn = -1;
+    int rowAt = -1;
+    // Print game introduction
+    PrintIntro();
+
+    //Linked list class instance object creation
+    GameBoardList* listOfBoard = new GameBoardList;
+    //Adding the empty board at the start of the game to the linekd list in the listOfBoard class just created.
+    listOfBoard->addNode(gameBoard);
+
+    //Main game loop, its programmed to exit in the functions implemeted so its an infinite loop.
+    while(true){
+        // PrintBoard(gameBoard);
+        listOfBoard->printBoard(); //prints the current board
+        CheckTurn(turn);//increments the turn and prints the turn x or o 
+        InputTurn(rowAt, columnIn, turn, gameBoard, listOfBoard);//gets input from user, checks validity and makes the move.
+        CheckWin(rowAt, columnIn, turn, gameBoard, listOfBoard);//checks the board to see if a win is present so it could end the game and declare a winner.
+        listOfBoard->addNode(gameBoard); //adds current gameboard to the list
+    }
+    //Do not code under here, the infinite loop above will prevent it from running.
+    return 0;
+}
